@@ -9,7 +9,10 @@ const {
 } = require("../../controllers/contacts.controllers");
 const { validateBody } = require("../../middlewares/index");
 const { tryCatchWrapper } = require("../../helpers/index");
-const { addContactSchema } = require("../../schemas/contacts");
+const {
+  addContactSchema,
+  updateFavoriteField,
+} = require("../../schemas/contacts");
 
 const contactsRouter = express.Router();
 
@@ -31,6 +34,10 @@ contactsRouter.put(
   tryCatchWrapper(updateContacts)
 );
 
-contactsRouter.patch("/:id/favorite", tryCatchWrapper(updateStatusContact));
+contactsRouter.patch(
+  "/:id/favorite",
+  validateBody(updateFavoriteField),
+  tryCatchWrapper(updateStatusContact)
+);
 
 module.exports = contactsRouter;
