@@ -1,53 +1,34 @@
-const fs = require("fs/promises");
-const path = require("path");
+const mongoose = require("mongoose");
 
-const contactsPath = path.resolve(__dirname, "./contacts.json");
+const schema = mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, "Set name for contact"],
+    },
 
-const listContacts = async () => {
-  contactsRaw = await fs.readFile(contactsPath);
-  contacts = JSON.parse(contactsRaw);
-  return contacts;
-};
+    email: {
+      type: String,
+      unique: true,
+    },
 
-const getContactById = async (contactId) => {
-  const contacts = await listContacts();
-  const getContacts = contacts.find((contact) => contact.id === contactId);
-  if (!getContacts) {
-    return null;
+    phone: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+
+    favorite: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  {
+    versionKey: false,
+    timestamps: true,
   }
-  return getContacts;
-};
+);
 
-const removeContact = async (contactId) => {
-  const id = contactId;
-  const contacts = await listContacts();
-  const updatedContacts = contacts.filter((contact) => contact.id !== id);
-  await fs.writeFile(contactsPath, JSON.stringify(updatedContacts, null, 2));
-};
+const Contact = mongoose.model("contact", schema);
 
-const addContact = async (body) => {
-  const contacts = await listContacts();
-  contacts.push(body);
-  await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
-  return body;
-};
-
-const updateContact = async (contactId, body) => {
-  const { name, email, phone } = body;
-  const contacts = await listContacts();
-  const contact = contacts.find((contact) => contact.id === contactId);
-  contact.name = name;
-  contact.email = email;
-  contact.phone = phone;
-
-  await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
-  return body;
-};
-
-module.exports = {
-  listContacts,
-  getContactById,
-  removeContact,
-  addContact,
-  updateContact,
-};
+module.exports = { Contact };
