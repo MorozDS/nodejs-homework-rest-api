@@ -1,4 +1,9 @@
 const { HttpError } = require("../helpers/index");
+const { jwt } = require("jsonwebtoken");
+const { Unauthorized } = require("http-errors");
+const { User } = require("../models/users");
+
+const { JWT_SECRET } = process.env;
 
 function validateBody(schema) {
   return (req, res, next) => {
@@ -11,6 +16,32 @@ function validateBody(schema) {
   };
 }
 
+async function auth(res, req, next) {
+  const authHeader = req.headers.authorization || "";
+  const [type, token] = authHeader.split(" ");
+
+  if (!token || type !== "Bearer") {
+    throw Unauthorized("Not authorized");
+  }
+
+  try {
+    const { id } = jwt.verify(token, JWT_SECRET);
+    const user = await User.findById(id);
+    req.user = user;
+  } catch (error) {
+    if (
+      error.name === "TokenExpiredError" ||
+      error.name === "JsonWebTokenError"
+    ) {
+      throw Unauthorized("jwt token is not valid");
+    }
+    if (!id) {
+      throw Unauthorized(" User id not find");
+    }
+  }
+  next();
+}
 module.exports = {
   validateBody,
+  auth,
 };
