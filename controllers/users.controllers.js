@@ -44,6 +44,7 @@ async function login(req, res, next) {
 
   const payload = { id: storedUser._id };
   const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
+  await User.findByIdAndUpdate(storedUser._id, { token });
 
   return res.status(200).json({
     token,
@@ -52,6 +53,12 @@ async function login(req, res, next) {
       subscription: "starter",
     },
   });
+}
+
+async function logout(req, res, next) {
+  const { _id } = req.user;
+  await User.findByIdAndUpdate(_id, { token: null });
+  res.status(204);
 }
 
 async function currentUser(req, res, next) {
@@ -69,5 +76,6 @@ async function currentUser(req, res, next) {
 module.exports = {
   register,
   login,
+  logout,
   currentUser,
 };

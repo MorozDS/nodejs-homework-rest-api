@@ -17,8 +17,9 @@ function validateBody(schema) {
 }
 
 async function auth(res, req, next) {
-  const authHeader = req.headers.authorization || "";
-  const [type, token] = authHeader.split(" ");
+  const { authorization = "" } = req.headers;
+  // const authHeader = req.headers.authorization || "";
+  const [type, token] = authorization.split(" ");
 
   if (!token || type !== "Bearer") {
     throw Unauthorized("Not authorized");
