@@ -3,7 +3,9 @@ const { Contact } = require("../models/contacts");
 const { HttpError, tryCatchWrapper } = require("../helpers/index");
 
 async function getContacts(req, res, next) {
-  const contacts = await Contact.find({});
+  const { page, limit } = req.query;
+  const skip = (page - 1) * limit;
+  const contacts = await Contact.find().limit(limit).skip(skip);
   res.status(200).json(contacts);
 }
 

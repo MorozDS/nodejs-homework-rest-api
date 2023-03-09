@@ -23,7 +23,6 @@ async function register(req, res, next) {
       user: {
         email,
         id: savedUser._id,
-        subscription: "starter",
       },
     });
   } catch (error) {
@@ -44,6 +43,7 @@ async function login(req, res, next) {
 
   const payload = { id: storedUser._id };
   const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
+
   await User.findByIdAndUpdate(storedUser._id, { token });
 
   return res.status(200).json({
@@ -57,20 +57,36 @@ async function login(req, res, next) {
 
 async function logout(req, res, next) {
   const { _id } = req.user;
+
   await User.findByIdAndUpdate(_id, { token: null });
-  res.status(204);
+  return res.status(204).json({
+    _id,
+  });
 }
 
 async function currentUser(req, res, next) {
   const { user } = req;
-  const { email, _id: id } = user;
+  const { email, _id: id, subscription } = user;
 
   return res.status(200).json({
     user: {
+      id,
       email,
       subscription,
     },
   });
+}
+
+async function updateUserSubscription(req, res, next) {
+  const { id } = req.params;
+  const { subscription } = req.body;
+  console.log(id);
+
+  const updateSubscription = await User.findByIdAndUpdate(
+    { _id: id },
+    { subscription }
+  );
+  res.status(200).json(updateSubscription);
 }
 
 module.exports = {
@@ -78,4 +94,5 @@ module.exports = {
   login,
   logout,
   currentUser,
+  updateUserSubscription,
 };
