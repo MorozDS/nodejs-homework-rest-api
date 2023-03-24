@@ -17,11 +17,6 @@ userRouter.post("/login", tryCatchWrapper(login));
 userRouter.get("/logout", tryCatchWrapper(auth), tryCatchWrapper(logout));
 userRouter.get("/current", auth, tryCatchWrapper(currentUser));
 userRouter.patch("/:id", tryCatchWrapper(updateUserSubscription));
-userRouter.patch(
-  "/avatars",
-  auth,
-  upload.single("avatar"),
-  tryCatchWrapper(updateAvatar)
-);
+userRouter.patch("/:id/avatars", auth, upload.single("avatar"), updateAvatar);
 
 module.exports = userRouter;

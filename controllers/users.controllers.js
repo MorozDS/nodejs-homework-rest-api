@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const dotenv = require("dotenv");
 const gravatar = require("gravatar");
+const Jimp = require("jimp");
 // const { path } = require("../app");
 dotenv.config();
 
@@ -13,21 +14,21 @@ const { JWT_SECRET } = process.env;
 
 async function register(req, res, next) {
   const { email, password } = req.body;
-  const avatarUrl = gravatar.url(email);
+  const imageUrl = await gravatar.url(email);
   const salt = await bcrypt.genSalt();
   const hashedPassword = await bcrypt.hash(password, salt);
 
   try {
     const savedUser = await User.create({
       email,
-      avatarUrl,
+      avatarUrl: imageUrl,
       password: hashedPassword,
     });
-
+    console.log(savedUser);
     res.status(201).json({
       user: {
         email,
-        avatarUrl,
+        avatarUrl: imageUrl,
         id: savedUser._id,
       },
     });
@@ -98,24 +99,28 @@ async function updateUserSubscription(req, res, next) {
 
 async function updateAvatar(req, res, next) {
   const { filename } = req.file;
-  const { _id } = req.user;
-  console.log("file", req.file);
+  const { _id: id } = req.user;
+  const imageName = `${id}_${filename}`;
+  const tmpPath = path.resolve(__dirname, "../", "temp", filename);
+
+  const image = await Jimp.read(tmpPath);
+  await image.resize(250, 250);
+  await image.writeAsync(tmpPath);
+
+  const newPath = path.resolve(
+    __dirname,
+    "../",
+    "public",
+    "avatars",
+    imageName
+  );
 
   try {
-    const tmpPath = path.resolve(__dirname, "../", "temp", filename);
-    const newPath = path.resolve(
-      __dirname,
-      "../",
-      "public",
-      "avatars",
-      filename
-    );
-
     await fs.rename(tmpPath, newPath);
-    const avatarURL = path.join("public", "avatars", filename);
-    await User.findByIdAndUpdate(id, { avatarURL });
+    const avatarUrl = path.join("avatars", imageName);
+    await User.findByIdAndUpdate(id, { avatarUrl });
     return res.status(200).json({
-      avatarURL,
+      avatarUrl,
     });
   } catch (error) {
     console.error("error while moving file to public", error);

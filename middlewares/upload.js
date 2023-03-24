@@ -2,6 +2,7 @@ const multer = require("multer");
 const path = require("path");
 
 const tempDir = path.resolve(__dirname, "../", "temp");
+
 const configMulter = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, tempDir);
