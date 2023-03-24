@@ -1,4 +1,5 @@
 const { HttpError } = require("../helpers/index");
+const upload = require("./upload");
 const jwt = require("jsonwebtoken");
 const { Unauthorized } = require("http-errors");
 const { User } = require("../models/users");
@@ -48,7 +49,9 @@ async function auth(req, res, next) {
   }
   next();
 }
+
 module.exports = {
   validateBody,
   auth,
+  upload,
 };
