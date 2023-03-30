@@ -10,6 +10,10 @@ const schema = mongoose.Schema({
     required: [true, "Email is required"],
     unique: true,
   },
+  avatarUrl: {
+    type: String,
+    required: true,
+  },
   subscription: {
     type: String,
     enum: ["starter", "pro", "business"],
