@@ -1,5 +1,6 @@
 const { User } = require("../models/users");
-const { Conflict, Unauthorized } = require("http-errors");
+const { Conflict, Unauthorized, NotFound } = require("http-errors");
+const { sendMail } = require("../helpers/index");
 const path = require("path");
 const fs = require("fs/promises");
 const jwt = require("jsonwebtoken");
@@ -7,6 +8,7 @@ const bcrypt = require("bcrypt");
 const dotenv = require("dotenv");
 const gravatar = require("gravatar");
 const Jimp = require("jimp");
+const { nanoid } = require("nanoid");
 // const { path } = require("../app");
 dotenv.config();
 
@@ -19,12 +21,22 @@ async function register(req, res, next) {
   const hashedPassword = await bcrypt.hash(password, salt);
 
   try {
+    const verificationToken = nanoid();
     const savedUser = await User.create({
       email,
       avatarUrl: imageUrl,
       password: hashedPassword,
+      verificationToken,
     });
     console.log(savedUser);
+
+    await sendMail({
+      to: email,
+      subject: "Please confirm your email",
+      html: `<a href="localhost:3000/api/users/verify/${verificationToken}">Confirm your email</a>`,
+      text: `<a href="localhost:3000/api/users/verify/${verificationToken}">Confirm your email</a>`,
+    });
+
     res.status(201).json({
       user: {
         email,
@@ -130,6 +142,26 @@ async function updateAvatar(req, res, next) {
   }
 }
 
+async function verifyEmail(req, res, next) {
+  const { verificationToken } = req.params;
+  const user = await User.findOne({
+    verificationToken: verificationToken,
+  });
+
+  if (!user) {
+    throw NotFound("User not found");
+  }
+
+  await User.findByIdAndUpdate(user._id, {
+    verify: true,
+    verificationToken: null,
+  });
+
+  return res.status(200).json({
+    message: "Verification successful",
+  });
+}
+
 module.exports = {
   register,
   login,
@@ -137,4 +169,5 @@ module.exports = {
   currentUser,
   updateUserSubscription,
   updateAvatar,
+  verifyEmail,
 };
