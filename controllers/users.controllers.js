@@ -1,5 +1,5 @@
 const { User } = require("../models/users");
-const { Conflict, Unauthorized, NotFound } = require("http-errors");
+const { Conflict, Unauthorized, NotFound, BadRequest } = require("http-errors");
 const { sendMail } = require("../helpers/index");
 const path = require("path");
 const fs = require("fs/promises");
@@ -33,8 +33,8 @@ async function register(req, res, next) {
     await sendMail({
       to: email,
       subject: "Please confirm your email",
-      html: `<a href="localhost:3000/api/users/verify/${verificationToken}">Confirm your email</a>`,
-      text: `<a href="localhost:3000/api/users/verify/${verificationToken}">Confirm your email</a>`,
+      html: `<a href="http://localhost:3000/api/users/verify/${verificationToken}">Confirm your email</a>`,
+      text: `<a href="http://localhost:3000/api/users/verify/${verificationToken}">Confirm your email</a>`,
     });
 
     res.status(201).json({
@@ -53,7 +53,7 @@ async function register(req, res, next) {
 
 async function login(req, res, next) {
   const { email, password, avatarUrl } = req.body;
-  const storedUser = await User.findOne({ email });
+  const storedUser = await User.findOne({ email, verify: true });
   const isPasswordValid = await bcrypt.compare(password, storedUser.password);
 
   if (!storedUser || !isPasswordValid) {
@@ -161,6 +161,27 @@ async function verifyEmail(req, res, next) {
     message: "Verification successful",
   });
 }
+async function resendVerify(req, res, next) {
+  const { email } = req.body;
+  if (!email) {
+    throw BadRequest("missing required field email");
+  }
+
+  const user = await User.findOne({ email });
+  console.log(user);
+  if (user.verify) {
+    throw BadRequest("Verification has already been passed");
+  }
+
+  await sendMail({
+    to: email,
+    subject: "Please confirm your email",
+    html: `<a href="http://localhost:3000/api/users/verify/${user.verificationToken}">Confirm your email</a>`,
+    text: `<a href="http://localhost:3000/api/users/verify/${user.verificationToken}">Confirm your email</a>`,
+  });
+
+  res.status(200).json({ message: "Verification email sent" });
+}
 
 module.exports = {
   register,
@@ -170,4 +191,5 @@ module.exports = {
   updateUserSubscription,
   updateAvatar,
   verifyEmail,
+  resendVerify,
 };

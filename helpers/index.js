@@ -21,7 +21,7 @@ function HttpError(status, message) {
   return err;
 }
 
-async function sendMail({ to, html, subject }) {
+async function sendMail({ to, html, subject, text }) {
   try {
     sendGrid.setApiKey(API_KEY_SENDGRID);
     const email = {
