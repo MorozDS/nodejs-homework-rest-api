@@ -8,6 +8,8 @@ const {
   currentUser,
   updateUserSubscription,
   updateAvatar,
+  verifyEmail,
+  resendVerify,
 } = require("../../controllers/users.controllers");
 
 const userRouter = express.Router();
@@ -18,5 +20,7 @@ userRouter.get("/logout", tryCatchWrapper(auth), tryCatchWrapper(logout));
 userRouter.get("/current", auth, tryCatchWrapper(currentUser));
 userRouter.patch("/:id", tryCatchWrapper(updateUserSubscription));
 userRouter.patch("/:id/avatars", auth, upload.single("avatar"), updateAvatar);
+userRouter.get("/verify/:verificationToken", tryCatchWrapper(verifyEmail));
+userRouter.post("/verify", tryCatchWrapper(resendVerify));
 
 module.exports = userRouter;
